@@ -15,7 +15,7 @@ def get_uploaded_files():
     st.header("📤 新旧料号替换")
    
     # ✅ 合并上传框：所有主+明细文件统一上传
-    mapping_file = st.file_uploader("🔁 上传新旧料号对照表", type="xlsx", key="upload_file")
+    upload_file = st.file_uploader("🔁 上传新旧料号对照表", type="xlsx", key="uploading")
 
     # 📁 上传辅助文件（可选）
     st.subheader("📁 上传辅助文件（如无更新可跳过）")
@@ -24,4 +24,4 @@ def get_uploaded_files():
     # 🚀 生成按钮
     start = st.button("🚀 生成汇总 Excel")
 
-    return uploaded_files, forecast_file, safety_file, mapping_file, pc_file, start
+    return upload_file, mapping_file
