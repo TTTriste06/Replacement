@@ -14,24 +14,15 @@ def main():
     setup_sidebar()
 
     # 获取上传文件
-    uploaded_files, forecast_file, safety_file, mapping_file, pc_file, start = get_uploaded_files()
+    upload_file, mapping_file = get_uploaded_files()
 
     if start:
-        if len(uploaded_files) < 8:
-            st.error("❌ 请上传 8 个核心文件（未交订单/成品在制/成品库存/CP在制/晶圆库存/下单明细/销货明细/到货明细）！")
-            return
-
+        
         # 加载辅助表
-        df_forecast = load_file_with_github_fallback("forecast", forecast_file, sheet_name="Sheet1")
-        df_safety = load_file_with_github_fallback("safety", safety_file)
         df_mapping = load_file_with_github_fallback("mapping", mapping_file)
-        df_pc = load_file_with_github_fallback("pc", pc_file)
         
         additional_sheets = {
-            "赛卓-预测": df_forecast,
-            "赛卓-安全库存": df_safety,
-            "赛卓-新旧料号": df_mapping,
-            "赛卓-供应商-PC": df_pc
+            "赛卓-预测": df_forecast
         }
 
         # 初始化处理器
