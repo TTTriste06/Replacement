@@ -99,13 +99,11 @@ def main():
 
 
                     sheet_name = file.name[:31]  # Excel sheet 名最长 31 字符
+                    df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-                    with pd.ExcelWriter(output_buffer, engine="openpyxl") as writer:
-                        df.to_excel(writer, sheet_name=sheet_name, index=False)
-                        
-                        #写入主计划
-                        ws = writer.book[sheet_name]
-                        adjust_column_width(ws)
+                    # 调整列宽
+                    ws = writer.book[sheet_name]
+                    adjust_column_width(ws)
 
                 except Exception as e:
                     st.warning(f"❌ 处理文件 `{file.name}` 失败：{e}")
