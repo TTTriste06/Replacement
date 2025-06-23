@@ -41,7 +41,7 @@ def apply_all_name_replacements(df, mapping_new, mapping_sub, sheet_name, field_
     if verbose:
         print(f"✅ [{sheet_name}] 共完成替换: {len(all_mapped_keys)} 种新料号")
 
-    return df, all_mapped_keys
+    return df
 
 def clean_mapping_headers(mapping_df):
     """
@@ -160,7 +160,7 @@ def apply_mapping_and_merge(df, mapping_df, field_map, verbose=True):
     if verbose:
         st.write(f"✅ 新旧料号替换成功: {len(replaced_names)} 项")
 
-    return df, replaced_names
+    return df
 
 def apply_extended_substitute_mapping(df, mapping_df, field_map, verbose=True):
     """
@@ -208,5 +208,5 @@ def apply_extended_substitute_mapping(df, mapping_df, field_map, verbose=True):
     if verbose:
         st.success(f"✅ 替代品名替换完成，共替换: {len(matched_keys)} 种")
 
-    return df, matched_keys
+    return df
     
