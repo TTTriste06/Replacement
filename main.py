@@ -6,6 +6,7 @@ from datetime import datetime
 from ui import setup_sidebar, get_uploaded_files
 from mapping_utils import clean_mapping_headers, apply_mapping_and_merge, apply_extended_substitute_mapping
 from excel_utils import adjust_column_width
+from github_utils import load_file_with_github_fallback
 
 def main():
     st.set_page_config(page_title="料号替换合并工具", layout="wide")
@@ -20,6 +21,9 @@ def main():
 
         # 加载映射表
         try:
+            mapping_df = load_file_with_github_fallback("mapping", mapping_file)
+            mapping_df = clean_mapping_headers(mapping_df)
+
             mapping_df = pd.read_excel(mapping_file)
             mapping_df = clean_mapping_headers(mapping_df)
             
