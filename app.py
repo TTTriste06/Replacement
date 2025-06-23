@@ -4,11 +4,11 @@ from io import BytesIO
 from file_processor import process_uploaded_file
 from mapping_utils import clean_mapping_headers
 
-st.set_page_config(page_title="料号替换器", layout="wide")
-st.title("📦 多文件新旧料号替换工具")
+st.set_page_config(page_title="料号替换软件", layout="wide")
+st.title("📦 文件新旧料号替换工具")
 
 # 上传主文件
-uploaded_files = st.file_uploader("📤 上传多个 Excel 文件（第一列为品名）", type="xlsx", accept_multiple_files=True)
+uploaded_files = st.file_uploader("📤 上传 Excel 文件（第一列为品名）", type="xlsx", accept_multiple_files=True)
 
 # 上传映射表
 mapping_file = st.file_uploader("🔁 上传新旧料号映射表", type="xlsx")
