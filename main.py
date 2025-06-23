@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 
 from ui import setup_sidebar, get_uploaded_files
-from mapping_utils import clean_mapping_headers, replace_all_names_with_mapping
+from mapping_utils import clean_mapping_headers, replace_all_names_with_mapping, apply_mapping_and_merge, apply_extended_substitute_mapping
 
 
 def main():
@@ -95,6 +95,8 @@ def main():
                     df = apply_extended_substitute_mapping(df, mapping_sub2)
                     df = apply_extended_substitute_mapping(df, mapping_sub3)
                     df = apply_extended_substitute_mapping(df, mapping_sub4)
+
+                    st.write(df)
                     
                     # 将相同品名合并（数值列相加）
                     numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
