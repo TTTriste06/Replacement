@@ -1,64 +1,61 @@
-import streamlit as st
 from io import BytesIO
-from datetime import datetime
+import streamlit as st
 import pandas as pd
+from datetime import datetime
 
-from pivot_processor import PivotProcessor
 from ui import setup_sidebar, get_uploaded_files
-from github_utils import load_file_with_github_fallback
-from urllib.parse import quote
+from mapping_utils import clean_mapping_headers, replace_all_names_with_mapping
 
 
 def main():
-    st.set_page_config(page_title="Excel数据透视汇总工具", layout="wide")
+    st.set_page_config(page_title="料号替换合并工具", layout="wide")
     setup_sidebar()
 
-    # 获取上传文件
-    upload_file, mapping_file = get_uploaded_files()
+    uploaded_files, mapping_file, start = get_uploaded_files()
 
     if start:
-        
-        # 加载辅助表
-        df_mapping = load_file_with_github_fallback("mapping", mapping_file)
-        
-        additional_sheets = {
-            "赛卓-预测": df_forecast
-        }
+        if not uploaded_files or mapping_file is None:
+            st.warning("请上传主文件和新旧料号表")
+            return
 
-        # 初始化处理器
-        buffer = BytesIO()
-        processor = PivotProcessor()
-        processor.set_additional_data(additional_sheets)
-        processor.process(uploaded_files, buffer, additional_sheets)  # ✅ 不再需要 classify_files()
-
-        # 下载文件按钮
-        file_name = f"运营数据订单-在制-库存汇总报告_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-        st.success("✅ 汇总完成！你可以下载结果文件：")
-        st.download_button(
-            label="📥 下载 Excel 汇总报告",
-            data=buffer.getvalue(),
-            file_name=file_name,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
-        # Sheet 预览
+        # 加载映射表
         try:
-            buffer.seek(0)
-            with pd.ExcelFile(buffer, engine="openpyxl") as xls:
-                sheet_names = xls.sheet_names
-                tabs = st.tabs(sheet_names)
-                for i, sheet_name in enumerate(sheet_names):
-                    try:
-                        df = pd.read_excel(xls, sheet_name=sheet_name)
-                        with tabs[i]:
-                            st.subheader(f"📄 {sheet_name}")
-                            st.dataframe(df, use_container_width=True)
-                    except Exception as e:
-                        with tabs[i]:
-                            st.error(f"❌ 无法读取工作表 `{sheet_name}`: {e}")
-        except Exception as e:
-            st.warning(f"⚠️ 无法预览生成的 Excel 文件：{e}")
+            mapping_df = pd.read_excel(mapping_file)
+            mapping_df = clean_mapping_headers(mapping_df)
 
+            mapping_new = mapping_df[["旧品名", "新品名"]].dropna()
+            mapping_sub = mapping_df[[col for col in ["新品名", "替代品名1", "替代品名2", "替代品名3", "替代品名4"] if col in mapping_df.columns]].copy()
+
+        except Exception as e:
+            st.error(f"❌ 映射表加载失败：{e}")
+            return
+
+        # 处理所有上传的文件
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+            for file in uploaded_files:
+                try:
+                    df = pd.read_excel(file)
+                    df.columns = df.columns.astype(str).str.strip()
+
+                    if df.empty or df.shape[1] < 1:
+                        st.warning(f"⚠️ 文件 `{file.name}` 内容为空，跳过")
+                        continue
+
+                    name_col = df.columns[0]
+                    df[name_col] = df[name_col].astype(str).str.strip()
+                    df[name_col] = replace_all_names_with_mapping(df[name_col], mapping_new, mapping_sub)
+
+                    sheet_name = file.name[:31]  # Excel sheet 名最长 31 字符
+                    df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+                except Exception as e:
+                    st.warning(f"❌ 处理文件 `{file.name}` 失败：{e}")
+
+        buffer.seek(0)
+        filename = f"替换结果_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        st.success("✅ 所有文件处理完毕！你可以下载结果：")
+        st.download_button("📥 下载合并 Excel", data=buffer, file_name=filename, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
 if __name__ == "__main__":
@@ -66,6 +63,5 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         import traceback
-        print("❌ Streamlit app crashed:", e)
+        print("❌ 应用崩溃:", e)
         traceback.print_exc()
-
