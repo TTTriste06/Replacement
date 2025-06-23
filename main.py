@@ -105,6 +105,9 @@ def main():
                     df_grouped = df.groupby(name_col, as_index=False)[numeric_cols].sum()
                     df = df_grouped[[name_col] + [col for col in df_grouped.columns if col != name_col]]
 
+                    st.write("✔️ 数值列识别为：", numeric_cols)
+
+
                     sheet_name = file.name[:31]  # Excel sheet 名最长 31 字符
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
 
