@@ -94,10 +94,16 @@ def main():
                     df = apply_extended_substitute_mapping(df, mapping_sub3)
                     df = apply_extended_substitute_mapping(df, mapping_sub4)
 
-                    # 将相同品名合并（数值列相加）
-                    numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
-                    df = df.groupby(name_col, as_index=False)[numeric_cols].sum()
 
+                    # 替换完品名之后
+                    for col in df.columns:
+                        if col != name_col:
+                            df[col] = pd.to_numeric(df[col], errors="coerce")  # 转成数字，无法转换的为 NaN
+                    
+                    # 合并数值列
+                    numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
+                    df_grouped = df.groupby(name_col, as_index=False)[numeric_cols].sum()
+                    df = df_grouped[[name_col] + [col for col in df_grouped.columns if col != name_col]]
 
                     sheet_name = file.name[:31]  # Excel sheet 名最长 31 字符
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
