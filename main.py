@@ -5,7 +5,7 @@ from datetime import datetime
 
 from ui import setup_sidebar, get_uploaded_files
 from mapping_utils import clean_mapping_headers, replace_all_names_with_mapping, apply_mapping_and_merge, apply_extended_substitute_mapping
-
+from excel_utils import adjust_column_width
 
 def main():
     st.set_page_config(page_title="料号替换合并工具", layout="wide")
@@ -93,15 +93,19 @@ def main():
                     df = apply_extended_substitute_mapping(df, mapping_sub3)
                     df = apply_extended_substitute_mapping(df, mapping_sub4)
 
-                    st.write(df)
-                    
                     # 将相同品名合并（数值列相加）
                     numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
                     df = df.groupby(name_col, as_index=False)[numeric_cols].sum()
 
 
                     sheet_name = file.name[:31]  # Excel sheet 名最长 31 字符
-                    df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+                    with pd.ExcelWriter(output_buffer, engine="openpyxl") as writer:
+                        df.to_excel(writer, sheet_name=sheet_name, index=False)
+                        
+                        #写入主计划
+                        ws = writer.book[sheet_name]
+                        adjust_column_width(ws)
 
                 except Exception as e:
                     st.warning(f"❌ 处理文件 `{file.name}` 失败：{e}")
