@@ -43,8 +43,15 @@ def main():
                         continue
 
                     name_col = df.columns[0]
+                    
+                    # 替换品名
                     df[name_col] = df[name_col].astype(str).str.strip()
                     df[name_col] = replace_all_names_with_mapping(df[name_col], mapping_new, mapping_sub)
+                    
+                    # 将相同品名合并（数值列相加）
+                    numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
+                    df = df.groupby(name_col, as_index=False)[numeric_cols].sum()
+
 
                     sheet_name = file.name[:31]  # Excel sheet 名最长 31 字符
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
