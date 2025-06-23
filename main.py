@@ -23,9 +23,6 @@ def main():
         try:
             mapping_df = load_file_with_github_fallback("mapping", mapping_file)
             mapping_df = clean_mapping_headers(mapping_df)
-
-            mapping_df = pd.read_excel(mapping_file)
-            mapping_df = clean_mapping_headers(mapping_df)
             
             # 去除“品名”为空的行
             mapping_new = mapping_df[
