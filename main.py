@@ -15,8 +15,8 @@ def main():
     uploaded_files, mapping_file, start = get_uploaded_files()
 
     if start:
-        if not uploaded_files or mapping_file is None:
-            st.warning("请上传替换文件和新旧料号表")
+        if not uploaded_files:
+            st.warning("请上传替换文件")
             return
 
         # 加载映射表
