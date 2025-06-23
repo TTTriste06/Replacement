@@ -7,19 +7,12 @@ from urllib.parse import quote
 
 # GitHub 配置
 GITHUB_TOKEN_KEY = "GITHUB_TOKEN"  # secrets.toml 中的密钥名
-REPO_NAME = "TTTriste06/operation_planning-"
+REPO_NAME = "TTTriste06/Replacement"
 BRANCH = "main"
 
 # 辅助文件标准名（可扩展）
 FILENAME_KEYS = {
-    "forecast": "预测.xlsx",
-    "safety": "安全库存.xlsx",
-    "mapping": "新旧料号.xlsx",
-    "supplier": "供应商-PC.xlsx",
-    "arrival": "到货明细.xlsx",
-    "order": "下单明细.xlsx",
-    "sales": "销货明细.xlsx",
-    "pc": "供应商-PC.xlsx",
+    "mapping": "新旧料号.xlsx"
 }
 
 
