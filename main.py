@@ -87,9 +87,6 @@ def main():
                     name_col = df.columns[0]
                     
                     # 替换品名
-                    df[name_col] = df[name_col].astype(str).str.strip()
-                    df[name_col] = replace_all_names_with_mapping(df[name_col], mapping_new, mapping_sub)
-
                     df = apply_mapping_and_merge(df, mapping_new)
                     df = apply_extended_substitute_mapping(df, mapping_sub1)
                     df = apply_extended_substitute_mapping(df, mapping_sub2)
