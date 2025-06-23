@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 
 from ui import setup_sidebar, get_uploaded_files
-from mapping_utils import clean_mapping_headers, replace_all_names_with_mapping, apply_mapping_and_merge, apply_extended_substitute_mapping
+from mapping_utils import clean_mapping_headers, apply_mapping_and_merge, apply_extended_substitute_mapping
 from excel_utils import adjust_column_width
 
 def main():
