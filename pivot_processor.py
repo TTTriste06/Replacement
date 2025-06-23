@@ -99,9 +99,6 @@ class PivotProcessor:
         headers = ["晶圆品名", "规格", "品名", "封装厂", "封装形式", "PC"]
         main_plan_df = pd.DataFrame(columns=headers)
 
-        ## == 品名 ==
-        df_unfulfilled = self.dataframes.get("赛卓-未交订单")
-        df_forecast = self.additional_sheets.get("赛卓-预测")
 
         name_unfulfilled = []
         name_forecast = []
@@ -109,11 +106,7 @@ class PivotProcessor:
         if df_unfulfilled is not None and not df_unfulfilled.empty:
             col_name = FIELD_MAPPINGS["赛卓-未交订单"]["品名"]
             name_unfulfilled = df_unfulfilled[col_name].astype(str).str.strip().tolist()
-
-        if df_forecast is not None and not df_forecast.empty:
-            col_name = FIELD_MAPPINGS["赛卓-预测"]["品名"]
-            name_forecast = df_forecast[col_name].astype(str).str.strip().tolist()
-
+            
         all_names = pd.Series(name_unfulfilled + name_forecast)
         all_names = replace_all_names_with_mapping(all_names, mapping_new, mapping_df)
         main_plan_df = main_plan_df.reindex(index=range(len(all_names)))
@@ -152,87 +145,8 @@ class PivotProcessor:
         all_replaced_names.update(replaced_sub3)
         all_replaced_names.update(replaced_sub4)
         
-        df_new = self.additional_sheets["赛卓-预测"]
-        df_new, replaced_main = apply_mapping_and_merge(df_new, mapping_new, FIELD_MAPPINGS["赛卓-预测"])
-        df_new, replaced_sub1 = apply_extended_substitute_mapping(df_new, mapping_sub1, FIELD_MAPPINGS["赛卓-预测"])
-        df_new, replaced_sub2 = apply_extended_substitute_mapping(df_new, mapping_sub2, FIELD_MAPPINGS["赛卓-预测"])
-        df_new, replaced_sub3 = apply_extended_substitute_mapping(df_new, mapping_sub3, FIELD_MAPPINGS["赛卓-预测"])
-        df_new, replaced_sub4 = apply_extended_substitute_mapping(df_new, mapping_sub4, FIELD_MAPPINGS["赛卓-预测"])
-        self.additional_sheets["赛卓-预测"] = df_new
-        all_replaced_names.update(replaced_main)
-        all_replaced_names.update(replaced_sub1)
-        all_replaced_names.update(replaced_sub2)
-        all_replaced_names.update(replaced_sub3)
-        all_replaced_names.update(replaced_sub4)
-
         all_replaced_names = sorted(all_replaced_names)
 
-
-        ## == 安全库存 ==
-        safety_df = self.additional_sheets.get("赛卓-安全库存")
-        if safety_df is not None and not safety_df.empty:
-            main_plan_df, unmatched_safety = merge_safety_inventory(main_plan_df, safety_df)
-            st.success("✅ 已合并安全库存数据")
-        
-        ## == 未交订单 ==
-        unfulfilled_df = self.dataframes.get("赛卓-未交订单")
-        if unfulfilled_df is not None and not unfulfilled_df.empty:
-            main_plan_df, unmatched_unfulfilled = append_unfulfilled_summary_columns_by_date(main_plan_df, unfulfilled_df)
-            st.success("✅ 已合并未交订单数据")
-        
-        ## == 预测 ==
-        forecast_df = self.additional_sheets.get("赛卓-预测")
-        if forecast_df is not None and not forecast_df.empty:
-            main_plan_df, unmatched_forecast = append_forecast_to_summary(main_plan_df, forecast_df)
-            st.success("✅ 已合并预测数据")
-
-        ## == 成品库存 ==
-        finished_df = self.dataframes.get("赛卓-成品库存")
-        if finished_df is not None and not finished_df.empty:
-            main_plan_df, unmatched_finished = merge_finished_inventory_with_warehouse_types(main_plan_df, finished_df, mapping_semi)
-            st.success("✅ 已合并成品库存数据")
-
-        ## == 成品在制 ==
-        product_in_progress_df = self.dataframes.get("赛卓-成品在制")
-        if product_in_progress_df is not None and not product_in_progress_df.empty:
-            main_plan_df, unmatched_in_progress = append_product_in_progress(main_plan_df, product_in_progress_df, mapping_semi)
-            st.success("✅ 已合并成品在制数据")
-
-        # === 投单计划 ===
-        forecast_months = init_monthly_fields(main_plan_df)
-
-        # 成品&半成品实际投单
-        df_order = self.dataframes.get("赛卓-下单明细", pd.DataFrame())
-        main_plan_df = aggregate_actual_fg_orders(main_plan_df, df_order, forecast_months)
-        main_plan_df = aggregate_actual_sfg_orders(main_plan_df, df_order, mapping_semi, forecast_months)
-
-        # 回货实际
-        df_arrival = self.dataframes.get("赛卓-到货明细", pd.DataFrame())
-        main_plan_df = aggregate_actual_arrivals(main_plan_df, df_arrival, forecast_months)
-
-        # 销售数量&销售金额
-        df_sales = self.dataframes.get("赛卓-销货明细", pd.DataFrame())
-        main_plan_df = aggregate_sales_quantity_and_amount(main_plan_df, df_sales, forecast_months)
-
-        # 成品投单计划
-        main_plan_df = generate_monthly_fg_plan(main_plan_df, forecast_months)
-
-        # 半成品投单计划
-        main_plan_df = generate_monthly_semi_plan(main_plan_df, forecast_months, mapping_semi)
-
-        # 投单计划调整
-        # main_plan_df = generate_monthly_adjust_plan(main_plan_df)
-
-        # 回货计划
-        # main_plan_df = generate_monthly_return_plan(main_plan_df)
-
-        
-        # 回货计划调整
-        # main_plan_df = generate_monthly_return_adjustment(main_plan_df)
-        
-        # 检查
-        # main_plan_df = reorder_main_plan_by_unfulfilled_sheet(main_plan_df, unfulfilled_df)
-        main_plan_df = drop_last_forecast_month_columns(main_plan_df, forecast_months)
          
         # === 写入 Excel 文件（主计划）===
         timestamp = datetime.now().strftime("%Y%m%d")
@@ -243,28 +157,8 @@ class PivotProcessor:
             #写入主计划
             ws = writer.book["主计划"]
             ws.cell(row=1, column=1, value=f"主计划生成时间：{timestamp}")
-            
-            legend_cell = ws.cell(row=1, column=3)
-            legend_cell.value = (
-                "Red < 0    "
-                "Yellow < 安全库存    "
-                "Orange > 2 × 安全库存"
-            )
-            legend_cell.alignment = Alignment(wrap_text=True, vertical="center", horizontal="center")
-            fill = PatternFill(start_color="FFCCE6FF", end_color="FFCCE6FF", fill_type="solid")
-            legend_cell.fill = fill
-
-
-            merge_safety_header(ws, main_plan_df)
-            merge_unfulfilled_order_header(ws)
-            merge_forecast_header(ws)
-            merge_inventory_header(ws)
-            merge_product_in_progress_header(ws)
 
             format_monthly_grouped_headers(ws)
-            highlight_production_plan_cells(ws, main_plan_df)
-            highlight_replaced_names_in_main_sheet(ws, all_replaced_names)
-
 
             adjust_column_width(ws)
 
