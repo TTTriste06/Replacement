@@ -15,17 +15,59 @@ def main():
 
     if start:
         if not uploaded_files or mapping_file is None:
-            st.warning("请上传主文件和新旧料号表")
+            st.warning("请上传替换文件和新旧料号表")
             return
 
         # 加载映射表
         try:
             mapping_df = pd.read_excel(mapping_file)
             mapping_df = clean_mapping_headers(mapping_df)
-
-            mapping_new = mapping_df[["旧品名", "新品名"]].dropna()
-            mapping_sub = mapping_df[[col for col in ["新品名", "替代品名1", "替代品名2", "替代品名3", "替代品名4"] if col in mapping_df.columns]].copy()
-
+            
+            # 去除“品名”为空的行
+            mapping_new = mapping_df[
+                ["旧晶圆品名", "旧规格", "旧品名", "新晶圆品名", "新规格", "新品名"]
+            ]
+            mapping_new = mapping_new[~mapping_df["新品名"].astype(str).str.strip().replace("nan", "").eq("")].copy()
+            mapping_new = mapping_new[~mapping_new["旧品名"].astype(str).str.strip().replace("nan", "").eq("")].copy()
+            
+            # 去除“替代品名”为空的行，并保留指定字段
+            mapping_sub1 = mapping_df[
+                ["新晶圆品名", "新规格", "新品名", "替代晶圆1", "替代规格1", "替代品名1"]
+            ]
+            mapping_sub1 = mapping_sub1[~mapping_df["替代品名1"].astype(str).str.strip().replace("nan", "").eq("")].copy()
+            mapping_sub1.columns = [
+                "新晶圆品名", "新规格", "新品名", 
+                "替代晶圆", "替代规格", "替代品名"
+            ]
+    
+    
+            mapping_sub2 = mapping_df[
+                ["新晶圆品名", "新规格", "新品名", "替代晶圆2", "替代规格2", "替代品名2"]
+            ]
+            mapping_sub2 = mapping_sub2[~mapping_df["替代品名2"].astype(str).str.strip().replace("nan", "").eq("")].copy()
+            mapping_sub2.columns = [
+                "新晶圆品名", "新规格", "新品名",
+                "替代晶圆", "替代规格", "替代品名"
+            ]
+    
+            mapping_sub3 = mapping_df[
+                ["新晶圆品名", "新规格", "新品名", "替代晶圆3", "替代规格3", "替代品名3"]
+            ]
+            mapping_sub3 = mapping_sub3[~mapping_df["替代品名3"].astype(str).str.strip().replace("nan", "").eq("")].copy()
+            mapping_sub3.columns = [
+                "新晶圆品名", "新规格", "新品名",
+                "替代晶圆", "替代规格", "替代品名"
+            ]
+            
+            mapping_sub4 = mapping_df[
+                ["新晶圆品名", "新规格", "新品名", "替代晶圆4", "替代规格4", "替代品名4"]
+            ]
+            mapping_sub4 = mapping_sub4[~mapping_df["替代品名4"].astype(str).str.strip().replace("nan", "").eq("")].copy()
+            mapping_sub4.columns = [
+                "新晶圆品名", "新规格", "新品名",
+                "替代晶圆", "替代规格", "替代品名"
+            ]
+        
         except Exception as e:
             st.error(f"❌ 映射表加载失败：{e}")
             return
@@ -47,6 +89,12 @@ def main():
                     # 替换品名
                     df[name_col] = df[name_col].astype(str).str.strip()
                     df[name_col] = replace_all_names_with_mapping(df[name_col], mapping_new, mapping_sub)
+
+                    df = apply_mapping_and_merge(df, mapping_new)
+                    df = apply_extended_substitute_mapping(df, mapping_sub1)
+                    df = apply_extended_substitute_mapping(df, mapping_sub2)
+                    df = apply_extended_substitute_mapping(df, mapping_sub3)
+                    df = apply_extended_substitute_mapping(df, mapping_sub4)
                     
                     # 将相同品名合并（数值列相加）
                     numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
